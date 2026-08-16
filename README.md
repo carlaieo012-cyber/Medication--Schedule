@@ -1,2 +1,2 @@
-# Medication--Schedule
+# Medication-Schedule
 Mummy medication schedule 
