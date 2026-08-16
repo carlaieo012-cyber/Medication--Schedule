@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Medication Schedule</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --card: #171a21;
+    --border: #2a2f3a;
+    --accent: #4f9dff;
+    --accent-soft: rgba(79,157,255,0.15);
+    --text: #e8eaed;
+    --muted: #9aa3af;
+    --done: #2ecc71;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 20px 12px 60px;
+  }
+  h1 {
+    font-size: 1.3rem;
+    text-align: center;
+    margin: 0 0 4px;
+  }
+  p.sub {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin: 0 0 20px;
+  }
+  .drug-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .drug-header {
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .drug-name {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  .drug-dose {
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  th {
+    color: var(--muted);
+    font-weight: 500;
+    padding: 8px 4px;
+    text-align: center;
+    font-size: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  th:first-child, td:first-child {
+    text-align: left;
+    padding-left: 14px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    width: 30%;
+  }
+  td {
+    text-align: center;
+    padding: 8px 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  tr:last-child td { border-bottom: none; }
+  .tick {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: transparent;
+    font-size: 15px;
+    transition: all 0.15s ease;
+  }
+  .tick.checked {
+    background: var(--done);
+    border-color: var(--done);
+    color: #0f1115;
+  }
+  .tick:active { transform: scale(0.9); }
+  .na { color: var(--border); font-size: 0.75rem; }
+  .progress-bar-wrap {
+    padding: 10px 16px 14px;
+  }
+  .progress-track {
+    height: 6px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.2s ease;
+  }
+  .progress-text {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 5px;
+    text-align: right;
+  }
+  .reset-btn {
+    display: block;
+    margin: 24px auto 0;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    cursor: pointer;
+  }
+  .reset-btn:active { opacity: 0.7; }
+
+  .help-card {
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin: 0 auto 18px;
+    max-width: 680px;
+    font-size: 0.78rem;
+    line-height: 1.45;
+  }
+  .help-card strong { display:block; margin-bottom:4px; color:var(--text); }
+  .help-note { margin-top:5px; color:var(--muted); }
+
+</style>
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Meds">
+  <meta name="theme-color" content="#0f1115">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" id="app-manifest">
+  <link rel="apple-touch-icon" id="apple-icon">
+  <script>
+    // Build a small inline manifest/icon so the page is ready for Add to Home Screen.
+    (function () {
+      const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+        <rect width="180" height="180" rx="38" fill="#171a21"/>
+        <text x="90" y="112" text-anchor="middle" font-size="88">💊</text>
+      </svg>`;
+      const iconUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(iconSvg);
+      const icon = document.getElementById('apple-icon');
+      if (icon) icon.href = iconUrl;
+
+      const manifest = {
+        name: "Medication Schedule",
+        short_name: "Meds",
+        start_url: ".",
+        display: "standalone",
+        background_color: "#0f1115",
+        theme_color: "#0f1115",
+        icons: [{src: iconUrl, sizes: "180x180", type: "image/svg+xml"}]
+      };
+      const blob = new Blob([JSON.stringify(manifest)], {type: 'application/manifest+json'});
+      const manifestUrl = URL.createObjectURL(blob);
+      const manifestLink = document.getElementById('app-manifest');
+      if (manifestLink) manifestLink.href = manifestUrl;
+    })();
+  </script>
+
+</head>
+<body>
+
+<h1>💊 Medication Schedule</h1>
+<p class="sub">5-day course — tap a circle each time you take a dose</p>
+<p class="sub" style="font-size:0.72rem; color:#5a6270;">✓ Your progress is saved automatically on this device</p>
+<div class="help-card">
+  <strong>📱 Add to Home Screen</strong>
+  <div>In Safari, tap <b>Share</b> → <b>Add to Home Screen</b> → <b>Add</b>.</div>
+  <div class="help-note">If you opened this file from Files, use the Safari/browser version first. The Home Screen version works like an app.</div>
+</div>
+
+
+<div id="app"></div>
+<button class="reset-btn" onclick="resetAll()">Reset all ticks</button>
+
+<script>
+const drugs = [
+  { name: "Cocodamol", dose: "2-2-2, every 8 hours", slots: ["morning","afternoon","night"] },
+  { name: "Metronidazole", dose: "1-1-1, every 8 hours", slots: ["morning","afternoon","night"] },
+  { name: "Ciprofloxacin", dose: "1-1, every 12 hours", slots: ["morning","night"] },
+  { name: "Arthrotec", dose: "1-1, every 12 hours", slots: ["morning","night"] },
+];
+
+const days = 5;
+const slotLabels = { morning: "AM", afternoon: "Noon", night: "PM" };
+
+// state[drugIndex][day][slot] = true/false
+const STORAGE_KEY = 'med_schedule_state_v1';
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // basic shape check so a corrupted/old value doesn't break things
+      if (Array.isArray(parsed) && parsed.length === drugs.length) return parsed;
+    }
+  } catch (e) {
+    console.warn('Could not load saved state, starting fresh.', e);
+  }
+  return drugs.map(d => Array.from({length: days}, () => ({morning:false, afternoon:false, night:false})));
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.warn('Could not save state.', e);
+  }
+}
+
+const state = loadState();
+
+function render() {
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+
+  drugs.forEach((drug, di) => {
+    const card = document.createElement('div');
+    card.className = 'drug-card';
+
+    const header = document.createElement('div');
+    header.className = 'drug-header';
+    header.innerHTML = `<div><div class="drug-name">${drug.name}</div><div class="drug-dose">${drug.dose}</div></div>`;
+    card.appendChild(header);
+
+    const table = document.createElement('table');
+    const totalSlots = drug.slots.length;
+    const headerCols = ['morning','afternoon','night'].filter(s => totalSlots===3 || drug.slots.includes(s));
+
+    let thead = '<tr><th>Day</th>';
+    ['morning','afternoon','night'].forEach(s => {
+      if (drug.slots.includes(s)) thead += `<th>${slotLabels[s]}</th>`;
+    });
+    thead += '</tr>';
+    table.innerHTML = thead;
+
+    for (let day = 0; day < days; day++) {
+      const tr = document.createElement('tr');
+      let rowHtml = `<td>Day ${day+1}</td>`;
+      table.appendChild(tr);
+      tr.innerHTML = `<td>Day ${day+1}</td>`;
+      ['morning','afternoon','night'].forEach(slot => {
+        const td = document.createElement('td');
+        if (drug.slots.includes(slot)) {
+          const btn = document.createElement('button');
+          btn.className = 'tick' + (state[di][day][slot] ? ' checked' : '');
+          btn.innerHTML = state[di][day][slot] ? '✓' : '';
+          btn.onclick = () => {
+            state[di][day][slot] = !state[di][day][slot];
+            saveState();
+            render();
+          };
+          td.appendChild(btn);
+        }
+        tr.appendChild(td);
+      });
+    }
+    card.appendChild(table);
+
+    // progress bar
+    const totalDoses = days * drug.slots.length;
+    const doneDoses = state[di].reduce((sum, day) => sum + drug.slots.filter(s => day[s]).length, 0);
+    const pct = Math.round((doneDoses/totalDoses)*100);
+    const progWrap = document.createElement('div');
+    progWrap.className = 'progress-bar-wrap';
+    progWrap.innerHTML = `
+      <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div class="progress-text">${doneDoses} / ${totalDoses} doses taken</div>
+    `;
+    card.appendChild(progWrap);
+
+    app.appendChild(card);
+  });
+}
+
+function resetAll() {
+  if (!confirm('Reset all ticks? This cannot be undone.')) return;
+  state.forEach(drug => drug.forEach(day => {
+    day.morning = false; day.afternoon = false; day.night = false;
+  }));
+  saveState();
+  render();
+}
+
+render();
+</script>
+
+</body>
+</html>
